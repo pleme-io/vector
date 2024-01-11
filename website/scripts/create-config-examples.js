@@ -25,6 +25,17 @@ const getExampleValue = (param, deepFilter) => {
     return obj.default || examplesVal || enumVal || null;
   };
 
+  const getValuePreferringSimple = (obj, siblingOptions) => {
+    if (obj.enum == null || siblingOptions == null) return getValue(obj);
+    const isSimple = (key) =>
+      !Object.values(siblingOptions).some(
+        (opt) => opt.required && opt.relevant_when && opt.relevant_when.includes(`"${key}"`)
+      );
+    const preferred = ["json", "text", "logfmt"];
+    const simpleKey = preferred.find((key) => key in obj.enum && isSimple(key)) || Object.keys(obj.enum).find(isSimple);
+    return obj.default || simpleKey || getValue(obj);
+  };
+
   Object.keys(param.type).forEach((k) => {
     const p = param.type[k];
 
@@ -64,6 +75,21 @@ const getExampleValue = (param, deepFilter) => {
             }
           }
         });
+      } else if (p.options) {
+        const subObj = {};
+        Object.entries(p.options)
+          .filter(([, opt]) => opt.required && !opt.relevant_when && opt.type)
+          .forEach(([optKey, opt]) => {
+            Object.values(opt.type).forEach((typeVal) => {
+              const v = getValuePreferringSimple(typeVal, p.options);
+              if (v !== null) {
+                subObj[optKey] = v;
+              }
+            });
+          });
+        if (Object.keys(subObj).length > 0) {
+          value = subObj;
+        }
       } else {
         value = getValue(p);
       }
