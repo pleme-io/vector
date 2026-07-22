@@ -117,9 +117,11 @@ Existing component wiring and serialization registration are unaffected.
 | Normal startup / reload (pre-commit) | `validate_structure` + `build` | `validate_structure` + `build` + `validate_environment` → await or spawn returned `Healthcheck` per `require_healthy` |
 | Normal startup / reload (post-commit) | `TopologyPiecesBuilder::build_transform` (unchanged) | `run` (existing `VectorSink::run`) |
 
-`--skip-healthchecks` short-circuits only the probe execution, not `build()`. The sink `build` phase
-runs regardless; only the `validate_environment` healthcheck probe is skipped, matching current
-behaviour (`src/validate.rs:315`).
+`--skip-healthchecks` short-circuits only the probe execution. The sink `build` phase runs
+regardless; only the `validate_environment` healthcheck probe is skipped, matching current
+behaviour. The per-sink and global `healthcheck.enabled` gates and the configured timeout remain
+the caller's responsibility (`TopologyPiecesBuilder`), not the component's — `validate_environment`
+returns the raw probe future unchanged.
 
 **Migration:**
 
