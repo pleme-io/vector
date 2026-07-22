@@ -52,7 +52,9 @@ simplify unit testing.
 - `vector validate` has no clean way to "check VRL without starting threads." The current workaround
   (stub enrichment tables, `validate_env()`, `context.key` guards) must be replicated per-transform.
 - `build()` spawns background tokio tasks before a topology reload is committed. If the reload is
-  rolled back, those tasks leak.
+  rolled back, those tasks leak. This RFC fixes the leak for transforms that currently spawn inside
+  `TransformConfig::build()` (e.g. `aws_ec2_metadata`). Task transforms that spawn inside
+  `transform()` (e.g. `throttle`'s rate-limiter flush) are not covered by this RFC.
 - Testing transform logic requires spinning up background machinery because construction and startup
   are inseparable.
 - The `build()` signature gives no signal about whether an implementation is safe to call
@@ -103,7 +105,9 @@ ComponentConfig:
 
 // Phase 4 is unchanged for both:
 //   Sinks:      VectorSink::run() (existing, no change).
-//   Transforms: TopologyPiecesBuilder::build_transform() (existing, no change).
+//   Transforms: TopologyPiecesBuilder::build_transform() wires channels and wraps the Transform
+//               into a Task; it runs pre-commit alongside phases 1-3. spawn_diff() starts the
+//               Task post-commit. Both unchanged.
 ```
 
 Existing component wiring and serialization registration are unaffected.
@@ -114,8 +118,8 @@ Existing component wiring and serialization registration are unaffected.
 | --- | --- | --- |
 | `vector validate --no-environment` | `validate_structure` | `validate_structure` |
 | `vector validate` | `validate_structure` + `build` | `validate_structure` + `build` + `validate_environment` → await returned `Healthcheck` directly |
-| Normal startup / reload (pre-commit) | `validate_structure` + `build` | `validate_structure` + `build` + `validate_environment` → await or spawn returned `Healthcheck` per `require_healthy` |
-| Normal startup / reload (post-commit) | `TopologyPiecesBuilder::build_transform` (unchanged) | `run` (existing `VectorSink::run`) |
+| Normal startup / reload (pre-commit) | `validate_structure` + `build` + `build_transform` (channel wiring, unchanged) | `validate_structure` + `build` + `validate_environment` → await or spawn returned `Healthcheck` per `require_healthy` |
+| Normal startup / reload (post-commit) | `spawn_diff` starts the Task (unchanged) | `run` (existing `VectorSink::run`) |
 
 `--skip-healthchecks` short-circuits only the probe execution. The sink `build` phase runs
 regardless; only the `validate_environment` healthcheck probe is skipped, matching current
