@@ -139,7 +139,9 @@ behaviour (`src/validate.rs:315`).
    (`src/sinks/http/config.rs`, `src/sinks/kafka/config.rs`). Prerequisite for calling `build()`
    under `--no-environment`: move credential and client creation out of `build()` and into `run()`,
    so `build()` is credential-free. Until that refactor lands for a given sink, `--no-environment`
-   stops at `validate_structure` for that sink.
+   stops at `validate_structure` for that sink. For sinks where `validate_environment` and `run()`
+   both need a client, prefer lazy credential resolution so the client is constructed once in `run()`
+   and the healthcheck probe uses it via a shared handle, rather than building the client twice.
 4. Update `TopologyPiecesBuilder` to invoke phases at the appropriate points for both transforms and
    sinks. For sinks this mostly formalizes the existing `build`, `run_healthchecks`, `spawn_diff`
    ordering in `src/topology/running.rs` rather than restructuring it.
