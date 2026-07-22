@@ -150,7 +150,10 @@ returns the raw probe future unchanged.
 5. Update `vector validate` to call `validate_structure` for all components under both
    `--no-environment` and full validation. VRL/condition compilation moves into `validate_structure`
    (alongside the existing pure checks). `validate_environment` is only called for sinks, and only
-   under full validation and startup. Remove the `validate_env()` workaround method.
+   under full validation and startup. `validate_env()` is removed per-transform as each one
+   migrates, not in one shot. Until a transform is migrated, `vector validate` continues calling the
+   legacy `validate_env()` path alongside `validate_structure()` so existing checks are not silently
+   dropped during the migration window.
 6. Remove the blanket adapter once all transforms and sinks are migrated.
 
 ## Alternatives
