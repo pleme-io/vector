@@ -3,7 +3,7 @@
 Component config traits currently conflate structural validation, environment validation, pure
 construction, and task spawning into a single `build()` method. This is most acute for
 `TransformConfig`, but the same shape of problem exists for `SinkConfig`. This RFC proposes a
-shared `ComponentConfig` trait with three explicit config-time phases (`validate_structure`,
+shared `ComponentLifecycle` trait with three explicit config-time phases (`validate_structure`,
 `validate_environment`, and `build`), implemented by `TransformConfig` and `SinkConfig`,
 to make `vector validate` reliable, prevent resource leaks on topology reload rollback, and
 simplify unit testing.
@@ -26,15 +26,14 @@ simplify unit testing.
 
 ### In scope
 
-- A new `ComponentConfig` trait with associated types `Context` and `Built`, defining
-  `validate_structure`, `validate_environment`, and `build` as the three config-time phases.
-- `TransformConfig: ComponentConfig<Context = TransformContext, Built = Transform>`: introduce
-  `validate_structure`, `validate_environment`, and `build` as construction only, no task spawning.
-  Phase 4 (task construction and channel wiring) stays in `TopologyPiecesBuilder::build_transform`
-  unchanged.
-- `SinkConfig: ComponentConfig<Context = SinkContext, Built = VectorSink>`: hoist `Healthcheck`
-  construction out of `build()` and into `validate_environment`; redefine `build` as construction
-  of an unstarted `VectorSink`, no task spawning.
+- A new `ComponentLifecycle` trait defining `validate_structure`, `validate_environment`, and `build`
+  as the three config-time phases.
+- `TransformConfig` implements `ComponentLifecycle`: introduce `validate_structure`,
+  `validate_environment`, and `build` as construction only, no task spawning. Phase 4 (task
+  construction and channel wiring) stays in `TopologyPiecesBuilder::build_transform` unchanged.
+- `SinkConfig` implements `ComponentLifecycle`: hoist `Healthcheck` construction out of `build()` and
+  into `validate_environment`; redefine `build` as construction of an unstarted `VectorSink`, no
+  task spawning.
 - Update `TopologyPiecesBuilder` and `vector validate` to call each phase at the right point for
   both transforms and sinks.
 - Migrate all existing transforms and sinks.
@@ -43,7 +42,7 @@ simplify unit testing.
 
 - `SourceConfig` is deferred. `Source` is defined as `BoxFuture<'static, Result<(), ()>>`
   (`lib/vector-core/src/source.rs`), so `build()`'s return value *is* the run loop rather than an
-  inert handle. Applying `ComponentConfig` to sources is doable but a larger effort than this RFC's
+  inert handle. Applying `ComponentLifecycle` to sources is doable but a larger effort than this RFC's
   scope; see Future Improvements.
 - Changes to user-visible configuration format or component behavior.
 
@@ -81,13 +80,13 @@ construction paths as normal startup, rather than separate, potentially divergen
 
 ### Implementation
 
-A shared `ComponentConfig` trait defines the three config-time phases. Phase 4 (startup) is not
+A shared `ComponentLifecycle` trait defines the three config-time phases. Phase 4 (startup) is not
 part of the config trait: for sinks it is the existing `VectorSink::run()`; for transforms it stays
 in `TopologyPiecesBuilder::build_transform()`, which owns the topology channels that cannot be
 plumbed through a config-trait method.
 
-```
-ComponentConfig:
+```text
+ComponentLifecycle:
     // Phase 1: structural checks (malformed URIs, duplicate keys, out-of-range values) plus
     // internal consistency (VRL/condition compilation against stub or real context). Default: always ok.
     validate_structure()
@@ -129,12 +128,14 @@ returns the raw probe future unchanged.
 
 **Migration:**
 
-1. Add `ComponentConfig` with `validate_structure`, `validate_environment`, and `build` as
+1. Add `ComponentLifecycle` with `validate_structure`, `validate_environment`, and `build` as
    required methods. Provide a blanket adapter for un-migrated components where `validate_structure`
    is always a no-op (never calls legacy `build()`), `validate_environment` calls legacy `build()`
    for sinks (to extract the `Healthcheck`) and is a no-op for transforms, and `build()` calls
-   legacy `build()` and returns the component. Un-migrated sinks therefore call legacy `build()`
-   twice during full startup; this is acceptable during the migration window.
+   legacy `build()` and returns the component. The adapter is only safe for sinks whose legacy
+   `build()` is idempotent and side-effect-free. Sinks that open real connections or perform
+   non-idempotent work in `build()` (e.g. NATS, Redis) must be migrated directly and must not
+   rely on the adapter.
 2. Migrate transforms one at a time, starting with `remap` (VRL) and `filter` / `route` (conditions).
    Prerequisite for `remap`: move VRL file reading (`file:`/`files:` options) to config load time so
    `compile_vrl_program` never does file I/O. By the time any lifecycle phase runs, the source is
@@ -143,11 +144,12 @@ returns the raw probe future unchanged.
    `validate_environment`, starting with `http` and `kafka` as representative cases, since their
    `build()` impls already construct `Healthcheck` as a clearly separable step
    (`src/sinks/http/config.rs`, `src/sinks/kafka/config.rs`). Prerequisite for calling `build()`
-   under `--no-environment`: move credential and client creation out of `build()` and into `run()`,
-   so `build()` is credential-free. Until that refactor lands for a given sink, `--no-environment`
-   stops at `validate_structure` for that sink. For sinks where `validate_environment` and `run()`
-   both need a client, prefer lazy credential resolution so the client is constructed once in `run()`
-   and the healthcheck probe uses it via a shared handle, rather than building the client twice.
+   under `--no-environment`: move credential and client creation out of `build()`. Credentials
+   belong in `validate_environment()` — the healthcheck probe resolves them pre-commit, and `run()`
+   receives the client via the built `VectorSink` or a shared handle. Until that refactor lands for
+   a given sink, `--no-environment` stops at `validate_structure` for that sink. When
+   `healthcheck.enabled=false`, credential failures surface at runtime; this matches existing
+   `healthcheck.enabled=false` semantics.
 4. Update `TopologyPiecesBuilder` to invoke phases at the appropriate points for both transforms and
    sinks. For sinks this mostly formalizes the existing `build`, `run_healthchecks`, `spawn_diff`
    ordering in `src/topology/running.rs` rather than restructuring it.
@@ -171,7 +173,7 @@ returns the raw probe future unchanged.
 
 ## Plan Of Attack
 
-1. Spike `ComponentConfig` behind a blanket adapter for one transform and one sink to prove the
+1. Spike `ComponentLifecycle` behind a blanket adapter for one transform and one sink to prove the
    pattern compiles and holds under `TopologyPiecesBuilder` and `vector validate`.
 2. Open a tracking issue listing every transform and sink still on the blanket adapter; migrate them
    incrementally, checking each off as it moves over.
@@ -179,8 +181,8 @@ returns the raw probe future unchanged.
 
 ## Future Improvements
 
-- Apply the same `ComponentConfig` contract to `SourceConfig`. This requires introducing a new
-  unstarted-source type to serve as `ComponentConfig::Built` (today `Source` is
+- Apply the same `ComponentLifecycle` contract to `SourceConfig`. This requires introducing a new
+  unstarted-source type to serve as `ComponentLifecycle::Built` (today `Source` is
   `BoxFuture<'static, Result<(), ()>>`, the run loop itself, not an inert handle), and auditing each
   source implementation individually: some (e.g. `socket`) already defer all work into the returned
   future and would migrate cheaply; others (e.g. `file`) perform environment-dependent work eagerly
