@@ -1,4 +1,4 @@
-# RFC <issue#> - <YYYY-MM-DD> - <title>
+# RFC [<issue#>] - <YYYY-MM-DD> - <title>
 
 One paragraph description of the change.
 
@@ -54,10 +54,10 @@ One paragraph description of the change.
 
 Incremental steps to execute this change. These will be converted to issues after the RFC is approved:
 
-- [ ] Submit a PR with spike-level code _roughly_ demonstrating the change.
-- [ ] Incremental change #1
-- [ ] Incremental change #2
-- [ ] ...
+1. Submit a PR with spike-level code _roughly_ demonstrating the change.
+2. Incremental change #1
+3. Incremental change #2
+4. ...
 
 Note: This can be filled out during the review process.
 
