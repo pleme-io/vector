@@ -90,9 +90,10 @@ ComponentConfig:
     // No context, no I/O. Default: always ok.
     validate_structure()
 
-    // Phase 2: environment checks.
-    // Transforms: compile VRL/conditions against stub (validate) or real (startup) enrichment tables.
-    // Sinks: produce a deferred Healthcheck future — caller awaits or spawns per require_healthy.
+    // Phase 2: answers one question — are the external dependencies this component needs reachable?
+    // For sinks this means healthchecks. Other complex interactions with external dependencies
+    // belong in run(). For transforms: compile VRL/conditions against stub (validate) or real
+    // (startup) enrichment tables.
     validate_environment(context)
 
     // Phase 3: construct the component. No task spawning. Safe to discard on rollback.
