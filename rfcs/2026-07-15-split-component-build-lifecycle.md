@@ -112,7 +112,7 @@ Existing component wiring and serialization registration are unaffected.
 
 | Call site | Phases invoked (transforms) | Phases invoked (sinks) |
 | --- | --- | --- |
-| `vector validate --no-environment` | `validate_structure` + `validate_environment` (stub context) | `validate_structure` + `build` |
+| `vector validate --no-environment` | `validate_structure` + `validate_environment` (stub context) | `validate_structure` |
 | `vector validate` | `validate_structure` + `validate_environment` + `build` | `validate_structure` + `build` + `validate_environment` → await returned `Healthcheck` directly |
 | Normal startup / reload (pre-commit) | `validate_structure` + `validate_environment` (real resources) + `build` | `validate_structure` + `build` + `validate_environment` → await or spawn returned `Healthcheck` per `require_healthy` |
 | Normal startup / reload (post-commit) | `TopologyPiecesBuilder::build_transform` (unchanged) | `run` (existing `VectorSink::run`) |
@@ -137,7 +137,10 @@ behaviour (`src/validate.rs:315`).
 3. Migrate sinks one at a time: hoist `Healthcheck` construction out of `build()` into
    `validate_environment`, starting with `http` and `kafka` as representative cases, since their
    `build()` impls already construct `Healthcheck` as a clearly separable step
-   (`src/sinks/http/config.rs`, `src/sinks/kafka/config.rs`).
+   (`src/sinks/http/config.rs`, `src/sinks/kafka/config.rs`). Prerequisite for calling `build()`
+   under `--no-environment`: move credential and client creation out of `build()` and into `run()`,
+   so `build()` is credential-free. Until that refactor lands for a given sink, `--no-environment`
+   stops at `validate_structure` for that sink.
 4. Update `TopologyPiecesBuilder` to invoke phases at the appropriate points for both transforms and
    sinks. For sinks this mostly formalizes the existing `build`, `run_healthchecks`, `spawn_diff`
    ordering in `src/topology/running.rs` rather than restructuring it.
