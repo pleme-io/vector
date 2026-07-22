@@ -90,7 +90,7 @@ ComponentConfig:
     // internal consistency (VRL/condition compilation against stub or real context). Default: always ok.
     validate_structure()
 
-    // Phase 2: answers one question — are the external dependencies this component needs reachable?
+    // Phase 2: answers one question: are the external dependencies this component needs reachable?
     // For sinks this means healthchecks. Other complex interactions with external dependencies
     // belong in run(). For transforms: no-op (nothing external to probe).
     validate_environment()
@@ -102,8 +102,8 @@ ComponentConfig:
 // SinkConfig:      validate_environment returns a Healthcheck future
 
 // Phase 4 is unchanged for both:
-//   Sinks:      VectorSink::run() — existing, no change.
-//   Transforms: TopologyPiecesBuilder::build_transform() — existing, no change.
+//   Sinks:      VectorSink::run() (existing, no change).
+//   Transforms: TopologyPiecesBuilder::build_transform() (existing, no change).
 ```
 
 Existing component wiring and serialization registration are unaffected.
@@ -120,7 +120,7 @@ Existing component wiring and serialization registration are unaffected.
 `--skip-healthchecks` short-circuits only the probe execution. The sink `build` phase runs
 regardless; only the `validate_environment` healthcheck probe is skipped, matching current
 behaviour. The per-sink and global `healthcheck.enabled` gates and the configured timeout remain
-the caller's responsibility (`TopologyPiecesBuilder`), not the component's — `validate_environment`
+the caller's responsibility (`TopologyPiecesBuilder`), not the component's. `validate_environment`
 returns the raw probe future unchanged.
 
 **Migration:**
@@ -133,7 +133,7 @@ returns the raw probe future unchanged.
    twice during full startup; this is acceptable during the migration window.
 2. Migrate transforms one at a time, starting with `remap` (VRL) and `filter` / `route` (conditions).
    Prerequisite for `remap`: move VRL file reading (`file:`/`files:` options) to config load time so
-   `compile_vrl_program` never does file I/O — by the time any lifecycle phase runs, the source is
+   `compile_vrl_program` never does file I/O. By the time any lifecycle phase runs, the source is
    already a `String` in memory.
 3. Migrate sinks one at a time: hoist `Healthcheck` construction out of `build()` into
    `validate_environment`, starting with `http` and `kafka` as representative cases, since their
