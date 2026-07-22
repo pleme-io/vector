@@ -86,21 +86,20 @@ plumbed through a config-trait method.
 
 ```
 ComponentConfig:
-    // Phase 1: pure structural checks (malformed URIs, duplicate keys, out-of-range values).
-    // No context, no I/O. Default: always ok.
+    // Phase 1: structural checks (malformed URIs, duplicate keys, out-of-range values) plus
+    // internal consistency (VRL/condition compilation against stub or real context). Default: always ok.
     validate_structure()
 
     // Phase 2: answers one question — are the external dependencies this component needs reachable?
     // For sinks this means healthchecks. Other complex interactions with external dependencies
-    // belong in run(). For transforms: compile VRL/conditions against stub (validate) or real
-    // (startup) enrichment tables.
-    validate_environment(context)
+    // belong in run(). For transforms: no-op (nothing external to probe).
+    validate_environment()
 
     // Phase 3: construct the component. No task spawning. Safe to discard on rollback.
     build(context)
 
-// TransformConfig: context = TransformContext, validate_environment returns nothing
-// SinkConfig:      context = SinkContext,      validate_environment returns Healthcheck future
+// TransformConfig: validate_environment is a no-op
+// SinkConfig:      validate_environment returns a Healthcheck future
 
 // Phase 4 is unchanged for both:
 //   Sinks:      VectorSink::run() — existing, no change.
@@ -113,9 +112,9 @@ Existing component wiring and serialization registration are unaffected.
 
 | Call site | Phases invoked (transforms) | Phases invoked (sinks) |
 | --- | --- | --- |
-| `vector validate --no-environment` | `validate_structure` + `validate_environment` (stub context) | `validate_structure` |
-| `vector validate` | `validate_structure` + `validate_environment` + `build` | `validate_structure` + `build` + `validate_environment` → await returned `Healthcheck` directly |
-| Normal startup / reload (pre-commit) | `validate_structure` + `validate_environment` (real resources) + `build` | `validate_structure` + `build` + `validate_environment` → await or spawn returned `Healthcheck` per `require_healthy` |
+| `vector validate --no-environment` | `validate_structure` | `validate_structure` |
+| `vector validate` | `validate_structure` + `build` | `validate_structure` + `build` + `validate_environment` → await returned `Healthcheck` directly |
+| Normal startup / reload (pre-commit) | `validate_structure` + `build` | `validate_structure` + `build` + `validate_environment` → await or spawn returned `Healthcheck` per `require_healthy` |
 | Normal startup / reload (post-commit) | `TopologyPiecesBuilder::build_transform` (unchanged) | `run` (existing `VectorSink::run`) |
 
 `--skip-healthchecks` short-circuits only the probe execution, not `build()`. The sink `build` phase
@@ -133,8 +132,7 @@ behaviour (`src/validate.rs:315`).
 2. Migrate transforms one at a time, starting with `remap` (VRL) and `filter` / `route` (conditions).
    Prerequisite for `remap`: move VRL file reading (`file:`/`files:` options) to config load time so
    `compile_vrl_program` never does file I/O — by the time any lifecycle phase runs, the source is
-   already a `String` in memory. This keeps `validate_structure` free of I/O and `validate_environment`
-   free of file-path concerns.
+   already a `String` in memory.
 3. Migrate sinks one at a time: hoist `Healthcheck` construction out of `build()` into
    `validate_environment`, starting with `http` and `kafka` as representative cases, since their
    `build()` impls already construct `Healthcheck` as a clearly separable step
@@ -145,11 +143,10 @@ behaviour (`src/validate.rs:315`).
 4. Update `TopologyPiecesBuilder` to invoke phases at the appropriate points for both transforms and
    sinks. For sinks this mostly formalizes the existing `build`, `run_healthchecks`, `spawn_diff`
    ordering in `src/topology/running.rs` rather than restructuring it.
-5. Update `vector validate` to call transform `validate_environment` with stub enrichment tables
-   under `--no-environment` and real tables otherwise. VRL/condition compilation stays in
-   `validate_environment` (it needs `TransformContext` for enrichment tables and merged schema).
-   For sinks, `--no-environment` skips `validate_environment` entirely. Remove the
-   `validate_env()` workaround method.
+5. Update `vector validate` to call `validate_structure` for all components under both
+   `--no-environment` and full validation. VRL/condition compilation moves into `validate_structure`
+   (alongside the existing pure checks). `validate_environment` is only called for sinks, and only
+   under full validation and startup. Remove the `validate_env()` workaround method.
 6. Remove the blanket adapter once all transforms and sinks are migrated.
 
 ## Alternatives
