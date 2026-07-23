@@ -218,7 +218,7 @@ proc-macro2 = { version = "1", default-features = false }
 quote = { version = "1", default-features = false }
 syn = { version = "2", default-features = false }
 toml = { version = "0.9.8", default-features = false, features = ["serde", "display", "parse"] }
-tonic = { version = "0.11", default-features = false, features = ["transport", "codegen", "prost", "tls", "tls-roots", "gzip", "zstd"] }
+tonic = { version = "0.11", default-features = false, features = ["transport", "codegen", "prost", "gzip", "zstd"] }
 tonic-build = { version = "0.11", default-features = false, features = ["transport", "prost"] }
 tonic-health = { version = "0.11", default-features = false }
 tonic-reflection = { version = "0.11", default-features = false, features = ["server"] }
@@ -418,7 +418,6 @@ rdkafka = { workspace = true, features = ["curl-static", "tokio", "libz", "ssl",
 redis = { version = "0.32.4", default-features = false, features = ["connection-manager", "sentinel", "tokio-comp", "tokio-native-tls-comp"], optional = true }
 regex.workspace = true
 roaring = { version = "0.11.2", default-features = false, features = ["std"], optional = true }
-rumqttc = { version = "0.24.0", default-features = false, features = ["use-rustls"], optional = true }
 rust_decimal = { workspace = true, optional = true }
 seahash = { version = "4.1.0", default-features = false }
 smallvec = { version = "1", default-features = false, features = ["union", "serde"] }
@@ -619,7 +618,7 @@ secrets-aws-secrets-manager = []
 
 # Sources
 sources = ["sources-logs", "sources-metrics"]
-sources-logs = ["sources-amqp", "sources-datadog_agent", "sources-demo_logs", "sources-docker_logs", "sources-exec", "sources-file", "sources-fluent", "sources-gcp_pubsub", "sources-heroku_logs", "sources-http_server", "sources-http_client", "sources-internal_logs", "sources-journald", "sources-kafka", "sources-kubernetes_logs", "sources-logstash", "sources-mqtt", "sources-nats", "sources-okta", "sources-opentelemetry", "sources-pulsar", "sources-file_descriptor", "sources-redis", "sources-socket", "sources-splunk_hec", "sources-stdin", "sources-syslog", "sources-vector", "sources-websocket", "sources-windows_event_log"]
+sources-logs = ["sources-amqp", "sources-datadog_agent", "sources-demo_logs", "sources-docker_logs", "sources-exec", "sources-file", "sources-fluent", "sources-gcp_pubsub", "sources-heroku_logs", "sources-http_server", "sources-http_client", "sources-internal_logs", "sources-journald", "sources-kafka", "sources-kubernetes_logs", "sources-logstash", "sources-nats", "sources-okta", "sources-opentelemetry", "sources-pulsar", "sources-file_descriptor", "sources-redis", "sources-socket", "sources-splunk_hec", "sources-stdin", "sources-syslog", "sources-vector", "sources-websocket", "sources-windows_event_log"]
 sources-metrics = ["dep:prost", "sources-apache_metrics", "sources-eventstoredb_metrics", "sources-host_metrics", "sources-internal_metrics", "sources-mongodb_metrics", "sources-nginx_metrics", "sources-postgresql_metrics", "sources-prometheus", "sources-static_metrics", "sources-statsd", "sources-vector", "sources-websocket"]
 
 sources-amqp = ["lapin", "async-rs"]
@@ -646,7 +645,6 @@ sources-kafka = ["dep:rdkafka"]
 sources-kubernetes_logs = ["vector-lib/file-source", "kubernetes", "transforms-reduce"]
 sources-logstash = ["sources-utils-net-tcp", "tokio-util/net"]
 sources-mongodb_metrics = ["dep:mongodb"]
-sources-mqtt = ["dep:rumqttc"]
 sources-nats = ["dep:async-nats", "dep:nkeys"]
 sources-nginx_metrics = ["dep:nom"]
 sources-okta = ["sources-utils-http-client"]
@@ -711,7 +709,7 @@ transforms-impl-reduce = []
 
 # Sinks
 sinks = ["sinks-logs", "sinks-metrics"]
-sinks-logs = ["sinks-amqp", "sinks-appsignal", "sinks-axiom", "sinks-azure_blob", "sinks-azure_logs_ingestion", "sinks-azure_monitor_logs", "sinks-blackhole", "sinks-chronicle", "sinks-clickhouse", "sinks-console", "sinks-databend", "sinks-databricks-zerobus", "sinks-datadog_events", "sinks-datadog_logs", "sinks-datadog_traces", "sinks-doris", "sinks-elasticsearch", "sinks-file", "sinks-gcp", "sinks-greptimedb_logs", "sinks-honeycomb", "sinks-http", "sinks-humio", "sinks-influxdb", "sinks-kafka", "sinks-keep", "sinks-loki", "sinks-mezmo", "sinks-mqtt", "sinks-nats", "sinks-new_relic", "sinks-new_relic_logs", "sinks-opentelemetry", "sinks-papertrail", "sinks-postgres", "sinks-pulsar", "sinks-redis", "sinks-sematext", "sinks-socket", "sinks-splunk_hec", "sinks-vector", "sinks-webhdfs", "sinks-websocket", "sinks-websocket-server"]
+sinks-logs = ["sinks-amqp", "sinks-appsignal", "sinks-axiom", "sinks-azure_blob", "sinks-azure_logs_ingestion", "sinks-azure_monitor_logs", "sinks-blackhole", "sinks-chronicle", "sinks-clickhouse", "sinks-console", "sinks-databend", "sinks-databricks-zerobus", "sinks-datadog_events", "sinks-datadog_logs", "sinks-datadog_traces", "sinks-doris", "sinks-elasticsearch", "sinks-file", "sinks-gcp", "sinks-greptimedb_logs", "sinks-honeycomb", "sinks-http", "sinks-humio", "sinks-influxdb", "sinks-kafka", "sinks-keep", "sinks-loki", "sinks-mezmo", "sinks-nats", "sinks-new_relic", "sinks-new_relic_logs", "sinks-opentelemetry", "sinks-papertrail", "sinks-postgres", "sinks-pulsar", "sinks-redis", "sinks-sematext", "sinks-socket", "sinks-splunk_hec", "sinks-vector", "sinks-webhdfs", "sinks-websocket", "sinks-websocket-server"]
 sinks-metrics = ["sinks-appsignal", "sinks-blackhole", "sinks-console", "sinks-datadog_metrics", "sinks-greptimedb_metrics", "sinks-humio", "sinks-influxdb", "sinks-kafka", "sinks-prometheus", "sinks-sematext", "sinks-statsd", "sinks-vector", "sinks-splunk_hec"]
 
 sinks-amqp = ["deadpool", "lapin", "async-rs"]
@@ -745,7 +743,6 @@ sinks-kafka = ["dep:rdkafka"]
 sinks-keep = []
 sinks-mezmo = []
 sinks-loki = ["loki-logproto"]
-sinks-mqtt = ["dep:rumqttc"]
 sinks-nats = ["dep:async-nats", "dep:nkeys"]
 sinks-new_relic_logs = ["sinks-http"]
 sinks-new_relic = []
@@ -769,7 +766,7 @@ sinks-webhdfs = ["dep:opendal"]
 nightly = []
 
 # Integration testing-related features
-all-integration-tests = ["amqp-integration-tests", "appsignal-integration-tests", "axiom-integration-tests", "azure-integration-tests", "clickhouse-integration-tests", "databend-integration-tests", "datadog-agent-integration-tests", "datadog-logs-integration-tests", "datadog-metrics-integration-tests", "datadog-traces-integration-tests", "dnstap-integration-tests", "docker-logs-integration-tests", "doris-integration-tests", "es-integration-tests", "eventstoredb_metrics-integration-tests", "fluent-integration-tests", "gcp-cloud-storage-integration-tests", "gcp-integration-tests", "gcp-pubsub-integration-tests", "greptimedb-integration-tests", "http-client-integration-tests", "humio-integration-tests", "influxdb-integration-tests", "kafka-integration-tests", "logstash-integration-tests", "loki-integration-tests", "mongodb_metrics-integration-tests", "mqtt-integration-tests", "nats-integration-tests", "nginx-integration-tests", "opentelemetry-integration-tests", "postgresql_metrics-integration-tests", "postgres_sink-integration-tests", "prometheus-integration-tests", "pulsar-integration-tests", "redis-integration-tests", "splunk-integration-tests", "vector-api-tests", "webhdfs-integration-tests", "windows-event-log-integration-tests"]
+all-integration-tests = ["amqp-integration-tests", "appsignal-integration-tests", "axiom-integration-tests", "azure-integration-tests", "clickhouse-integration-tests", "databend-integration-tests", "datadog-agent-integration-tests", "datadog-logs-integration-tests", "datadog-metrics-integration-tests", "datadog-traces-integration-tests", "dnstap-integration-tests", "docker-logs-integration-tests", "doris-integration-tests", "es-integration-tests", "eventstoredb_metrics-integration-tests", "fluent-integration-tests", "gcp-cloud-storage-integration-tests", "gcp-integration-tests", "gcp-pubsub-integration-tests", "greptimedb-integration-tests", "http-client-integration-tests", "humio-integration-tests", "influxdb-integration-tests", "kafka-integration-tests", "logstash-integration-tests", "loki-integration-tests", "mongodb_metrics-integration-tests", "nats-integration-tests", "nginx-integration-tests", "opentelemetry-integration-tests", "postgresql_metrics-integration-tests", "postgres_sink-integration-tests", "prometheus-integration-tests", "pulsar-integration-tests", "redis-integration-tests", "splunk-integration-tests", "vector-api-tests", "webhdfs-integration-tests", "windows-event-log-integration-tests"]
 
 amqp-integration-tests = ["sources-amqp", "sinks-amqp"]
 appsignal-integration-tests = ["sinks-appsignal"]
@@ -802,7 +799,6 @@ kafka-integration-tests = ["sinks-kafka", "sources-kafka"]
 logstash-integration-tests = ["docker", "sources-logstash"]
 loki-integration-tests = ["sinks-loki"]
 mongodb_metrics-integration-tests = ["sources-mongodb_metrics"]
-mqtt-integration-tests = ["sinks-mqtt", "sources-mqtt"]
 nats-integration-tests = ["sinks-nats", "sources-nats"]
 nginx-integration-tests = ["sources-nginx_metrics"]
 opentelemetry-integration-tests = ["sources-opentelemetry", "dep:prost"]
