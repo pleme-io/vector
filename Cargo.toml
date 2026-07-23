@@ -138,7 +138,15 @@ members = [
 
 [workspace.lints.rust]
 # 'cfg(tokio_unstable)' used in vector; 'cfg(ddsketch_extended)' used in vector-core
-unexpected_cfgs = { level = "warn", check-cfg = ['cfg(tokio_unstable)', 'cfg(ddsketch_extended)'] }
+# 'cfg(feature, values(any()))': this pleme-cve strip-fork removes whole feature
+# families (parquet, aws-*, mqtt) at the Cargo.toml level to drop their
+# CVE-bearing dependencies, but leaves the upstream `#[cfg(feature = "…")]`-gated
+# code in place (it simply compiles out when the feature is absent). Without this,
+# rustc's unexpected_cfgs lint fires on every such orphaned cfg (19 for parquet in
+# codecs, 58+ for aws-*) and the nix build's warnings-as-errors turns them fatal.
+# Declaring any feature value expected keeps the gated code correctly excluded
+# while silencing the hygiene lint for features we deliberately removed.
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(tokio_unstable)', 'cfg(ddsketch_extended)', 'cfg(feature, values(any()))'] }
 
 [workspace.lints.clippy]
 string_slice = "warn"
