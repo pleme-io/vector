@@ -626,7 +626,7 @@ secrets-aws-secrets-manager = []
 
 # Sources
 sources = ["sources-logs", "sources-metrics"]
-sources-logs = ["sources-amqp", "sources-datadog_agent", "sources-demo_logs", "sources-docker_logs", "sources-exec", "sources-file", "sources-fluent", "sources-gcp_pubsub", "sources-heroku_logs", "sources-http_server", "sources-http_client", "sources-internal_logs", "sources-journald", "sources-kafka", "sources-kubernetes_logs", "sources-logstash", "sources-nats", "sources-okta", "sources-opentelemetry", "sources-pulsar", "sources-file_descriptor", "sources-redis", "sources-socket", "sources-splunk_hec", "sources-stdin", "sources-syslog", "sources-vector", "sources-websocket", "sources-windows_event_log"]
+sources-logs = ["sources-amqp", "sources-datadog_agent", "sources-demo_logs", "sources-docker_logs", "sources-exec", "sources-file", "sources-fluent", "sources-heroku_logs", "sources-http_server", "sources-http_client", "sources-internal_logs", "sources-journald", "sources-kafka", "sources-kubernetes_logs", "sources-logstash", "sources-nats", "sources-okta", "sources-opentelemetry", "sources-pulsar", "sources-file_descriptor", "sources-redis", "sources-socket", "sources-splunk_hec", "sources-stdin", "sources-syslog", "sources-vector", "sources-websocket", "sources-windows_event_log"]
 sources-metrics = ["dep:prost", "sources-apache_metrics", "sources-eventstoredb_metrics", "sources-host_metrics", "sources-internal_metrics", "sources-mongodb_metrics", "sources-nginx_metrics", "sources-postgresql_metrics", "sources-prometheus", "sources-static_metrics", "sources-statsd", "sources-vector", "sources-websocket"]
 
 sources-amqp = ["lapin", "async-rs"]
@@ -640,7 +640,11 @@ sources-exec = []
 sources-file = ["vector-lib/file-source"]
 sources-file_descriptor = ["tokio-util/io"]
 sources-fluent = ["dep:base64", "sources-utils-net-tcp", "sources-utils-net-unix", "tokio-util/net", "dep:rmpv", "dep:rmp-serde", "dep:serde_bytes"]
-sources-gcp_pubsub = ["gcp", "dep:h2", "dep:prost", "dep:prost-types", "protobuf-build", "dep:tonic"]
+# cve-strip: emptied — gcp_pubsub pulls tonic's tls (removed to kill the
+# rustls-webpki chain); not needed by the fleet's vector. Declared-but-empty so
+# test/aggregate refs don't error "unknown feature"; the #[cfg]-gated source
+# compiles out.
+sources-gcp_pubsub = []
 sources-heroku_logs = ["sources-utils-http", "sources-utils-http-query", "sources-http_server"]
 sources-host_metrics = ["heim/cpu", "heim/host", "heim/memory", "heim/net"]
 sources-http_client = ["sources-utils-http-client"]
@@ -717,7 +721,7 @@ transforms-impl-reduce = []
 
 # Sinks
 sinks = ["sinks-logs", "sinks-metrics"]
-sinks-logs = ["sinks-amqp", "sinks-appsignal", "sinks-axiom", "sinks-azure_blob", "sinks-azure_logs_ingestion", "sinks-azure_monitor_logs", "sinks-blackhole", "sinks-chronicle", "sinks-clickhouse", "sinks-console", "sinks-databend", "sinks-databricks-zerobus", "sinks-datadog_events", "sinks-datadog_logs", "sinks-datadog_traces", "sinks-doris", "sinks-elasticsearch", "sinks-file", "sinks-gcp", "sinks-greptimedb_logs", "sinks-honeycomb", "sinks-http", "sinks-humio", "sinks-influxdb", "sinks-kafka", "sinks-keep", "sinks-loki", "sinks-mezmo", "sinks-nats", "sinks-new_relic", "sinks-new_relic_logs", "sinks-opentelemetry", "sinks-papertrail", "sinks-postgres", "sinks-pulsar", "sinks-redis", "sinks-sematext", "sinks-socket", "sinks-splunk_hec", "sinks-vector", "sinks-webhdfs", "sinks-websocket", "sinks-websocket-server"]
+sinks-logs = ["sinks-amqp", "sinks-appsignal", "sinks-axiom", "sinks-azure_blob", "sinks-azure_logs_ingestion", "sinks-azure_monitor_logs", "sinks-blackhole", "sinks-chronicle", "sinks-clickhouse", "sinks-console", "sinks-databend", "sinks-datadog_events", "sinks-datadog_logs", "sinks-datadog_traces", "sinks-doris", "sinks-elasticsearch", "sinks-file", "sinks-gcp", "sinks-greptimedb_logs", "sinks-honeycomb", "sinks-http", "sinks-humio", "sinks-influxdb", "sinks-kafka", "sinks-keep", "sinks-loki", "sinks-mezmo", "sinks-nats", "sinks-new_relic", "sinks-new_relic_logs", "sinks-opentelemetry", "sinks-papertrail", "sinks-postgres", "sinks-pulsar", "sinks-redis", "sinks-sematext", "sinks-socket", "sinks-splunk_hec", "sinks-vector", "sinks-webhdfs", "sinks-websocket", "sinks-websocket-server"]
 sinks-metrics = ["sinks-appsignal", "sinks-blackhole", "sinks-console", "sinks-datadog_metrics", "sinks-greptimedb_metrics", "sinks-humio", "sinks-influxdb", "sinks-kafka", "sinks-prometheus", "sinks-sematext", "sinks-statsd", "sinks-vector", "sinks-splunk_hec"]
 
 sinks-amqp = ["deadpool", "lapin", "async-rs"]
@@ -731,7 +735,9 @@ sinks-chronicle = []
 sinks-clickhouse = ["dep:nom", "dep:rust_decimal", "codecs-arrow"]
 sinks-console = []
 sinks-databend = ["dep:databend-client"]
-sinks-databricks-zerobus = ["dep:databricks-zerobus-ingest-sdk", "codecs-arrow", "arrow/ipc_compression"]
+# cve-strip: emptied — databricks pulls arrow (the parquet/arrow CVE chain +
+# an arrow-version conflict); not needed by the fleet's vector.
+sinks-databricks-zerobus = []
 sinks-datadog_events = []
 sinks-datadog_logs = []
 sinks-datadog_metrics = ["protobuf-build", "dep:prost", "dep:prost-reflect"]
