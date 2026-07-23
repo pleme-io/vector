@@ -290,35 +290,14 @@ metrics.workspace = true
 metrics-tracing-context.workspace = true
 
 # AWS - Official SDK
-aws-runtime = { version = "1.5.9", optional = true }
-aws-config = { version = "1.8.13", default-features = false, features = ["behavior-version-latest", "credentials-process", "sso", "rt-tokio"], optional = true }
-aws-credential-types = { version = "1.2.4", default-features = false, features = ["hardcoded-credentials"], optional = true }
-aws-sdk-cloudwatch = { version = "1.102.0", default-features = false, features = ["behavior-version-latest", "rt-tokio"], optional = true }
-aws-sdk-cloudwatchlogs = { version = "1.116.0", default-features = false, features = ["behavior-version-latest", "rt-tokio"], optional = true }
-aws-sdk-elasticsearch = { version = "1.96.0", default-features = false, features = ["behavior-version-latest", "rt-tokio"], optional = true }
-aws-sdk-firehose = { version = "1.101.0", default-features = false, features = ["behavior-version-latest", "rt-tokio"], optional = true }
-aws-sdk-kinesis = { version = "1.99.0", default-features = false, features = ["behavior-version-latest", "rt-tokio"], optional = true }
-aws-sdk-kms = { version = "1.99.0", default-features = false, features = ["behavior-version-latest", "rt-tokio"], optional = true }
-aws-sdk-s3 = { version = "1.122.0", default-features = false, features = ["behavior-version-latest", "rt-tokio"], optional = true }
-aws-sdk-secretsmanager = { version = "1.99.0", default-features = false, features = ["behavior-version-latest", "rt-tokio"], optional = true }
-aws-sdk-sns = { version = "1.94.0", default-features = false, features = ["behavior-version-latest", "rt-tokio"], optional = true }
-aws-sdk-sqs = { version = "1.93.0", default-features = false, features = ["behavior-version-latest", "rt-tokio"], optional = true }
-aws-types = { version = "1.3.8", default-features = false, optional = true }
 
 # The sts crate is needed despite not being referred to anywhere in the code because we need to set the
 # `behavior-version-latest` feature. Without this we get a runtime panic when `auth.assume_role` authentication
 # is configured.
-aws-sdk-sts = { version = "1.73.0", default-features = false, features = ["behavior-version-latest", "rt-tokio"], optional = true }
 
 # The `aws-sdk-sts` crate is needed despite not being referred to anywhere in the code because we need to set the
 # `behavior-version-latest` feature. Without this we get a runtime panic when `auth.assume_role` authentication is configured.
-aws-sigv4 = { version = "1.3.2", default-features = false, features = ["sign-http"], optional = true }
 
-aws-smithy-async = { version = "1.2.5", default-features = false, features = ["rt-tokio"], optional = true }
-aws-smithy-http = { version = "0.63", default-features = false, features = ["event-stream", "rt-tokio"], optional = true }
-aws-smithy-runtime = { version = "1.8.3", default-features = false, features = ["client", "connector-hyper-0-14-x", "rt-tokio"], optional = true }
-aws-smithy-runtime-api = { version = "1.7.3", default-features = false, optional = true }
-aws-smithy-types = { version = "1.2.11", default-features = false, features = ["rt-tokio"], optional = true }
 
 # Azure
 azure_core = { version = "1.0", default-features = false, features = ["reqwest", "hmac_openssl"], optional = true }
@@ -374,13 +353,6 @@ arc-swap = { workspace = true, default-features = false, optional = true }
 async-compression = { workspace = true, features = ["zstd"], optional = true }
 arrow = { version = "58.2.0", default-features = false, features = ["ipc"], optional = true }
 arrow-schema = { version = "58.2.0", default-features = false, optional = true }
-parquet = { version = "58.2.0", default-features = false, features = [
-  "arrow",
-  "snap",
-  "zstd",
-  "lz4",
-  "flate2-rust_backened",
-], optional = true }
 axum = { version = "0.6.20", default-features = false }
 base64 = { workspace = true, optional = true }
 bloomy = { version = "1.2.0", default-features = false, optional = true }
@@ -508,7 +480,6 @@ openssl-src = { version = "300", default-features = false, features = ["force-en
 approx = "0.5.1"
 strum.workspace = true
 assert_cmd = { version = "2.0.17", default-features = false }
-aws-smithy-runtime = { version = "1.8.3", default-features = false, features = ["tls-rustls"] }
 base64 = "0.22.1"
 criterion = { workspace = true, features = ["html_reports", "async_tokio"] }
 itertools.workspace = true
@@ -571,7 +542,7 @@ vendored = ["gssapi-vendored"]
 
 # Default features for *-pc-windows-msvc
 # TODO: Enable SASL https://github.com/vectordotdev/vector/pull/3081#issuecomment-659298042
-base = ["api", "enrichment-tables", "sinks", "sources", "transforms", "secrets", "vrl/stdlib", "codecs-parquet"]
+base = ["api", "enrichment-tables", "sinks", "sources", "transforms", "secrets", "vrl/stdlib"]
 enable-api-client = ["base", "api-client"]
 default-musl = ["enable-api-client", "sources-dnstap", "tikv-jemallocator", "vendored", "rdkafka?/cmake_build"]
 default-no-api-client = ["base", "sources-dnstap", "tikv-jemallocator", "vendored"]
@@ -615,43 +586,15 @@ kubernetes = ["dep:k8s-openapi", "dep:kube"]
 docker = ["dep:bollard", "dep:dirs-next"]
 
 # API
-api = [
-  "dep:base64",
-  "dep:tonic",
-  "dep:tonic-health",
-  "dep:tonic-reflection",
-  "dep:prost",
-  "dep:prost-types",
-  "protobuf-build",
-  "vector-lib/api",
-]
+api = ["dep:base64", "dep:tonic", "dep:tonic-health", "dep:tonic-reflection", "dep:prost", "dep:prost-types", "protobuf-build", "vector-lib/api"]
 
 # API client
-api-client = [
-  "api-client-minimal",
-  "top",
-]
+api-client = ["api-client-minimal", "top"]
 
-api-client-minimal = [
-  "vector-lib/api",
-  "vector-lib/api-client",
-]
+api-client-minimal = ["vector-lib/api", "vector-lib/api-client"]
 
 top = ["vector-lib/vector-top", "vector-lib/api-client"]
 
-aws-core = [
-  "aws-runtime",
-  "aws-config",
-  "dep:aws-credential-types",
-  "dep:aws-sigv4",
-  "dep:aws-types",
-  "dep:aws-smithy-async",
-  "dep:aws-smithy-http",
-  "dep:aws-smithy-types",
-  "dep:aws-smithy-runtime",
-  "dep:aws-smithy-runtime-api",
-  "dep:aws-sdk-sts",
-]
 
 # Anything that requires Protocol Buffers.
 protobuf-build = ["dep:tonic-build", "dep:prost-build"]
@@ -666,75 +609,21 @@ enrichment-tables-memory = ["dep:evmap", "dep:evmap-derive", "dep:thread_local"]
 
 # Codecs
 codecs-arrow = ["dep:arrow", "dep:arrow-schema", "vector-lib/arrow"]
-codecs-parquet = ["dep:parquet", "codecs-arrow", "vector-lib/parquet"]
 codecs-opentelemetry = ["vector-lib/opentelemetry"]
 codecs-syslog = ["vector-lib/syslog"]
 
 # Secrets
-secrets = ["secrets-aws-secrets-manager"]
+secrets = []
 
-secrets-aws-secrets-manager = ["aws-core", "dep:aws-sdk-secretsmanager"]
+secrets-aws-secrets-manager = []
 
 # Sources
 sources = ["sources-logs", "sources-metrics"]
-sources-logs = [
-  "sources-amqp",
-  "sources-aws_kinesis_firehose",
-  "sources-aws_s3",
-  "sources-aws_sqs",
-  "sources-datadog_agent",
-  "sources-demo_logs",
-  "sources-docker_logs",
-  "sources-exec",
-  "sources-file",
-  "sources-fluent",
-  "sources-gcp_pubsub",
-  "sources-heroku_logs",
-  "sources-http_server",
-  "sources-http_client",
-  "sources-internal_logs",
-  "sources-journald",
-  "sources-kafka",
-  "sources-kubernetes_logs",
-  "sources-logstash",
-  "sources-mqtt",
-  "sources-nats",
-  "sources-okta",
-  "sources-opentelemetry",
-  "sources-pulsar",
-  "sources-file_descriptor",
-  "sources-redis",
-  "sources-socket",
-  "sources-splunk_hec",
-  "sources-stdin",
-  "sources-syslog",
-  "sources-vector",
-  "sources-websocket",
-  "sources-windows_event_log",
-]
-sources-metrics = [
-  "dep:prost",
-  "sources-apache_metrics",
-  "sources-aws_ecs_metrics",
-  "sources-eventstoredb_metrics",
-  "sources-host_metrics",
-  "sources-internal_metrics",
-  "sources-mongodb_metrics",
-  "sources-nginx_metrics",
-  "sources-postgresql_metrics",
-  "sources-prometheus",
-  "sources-static_metrics",
-  "sources-statsd",
-  "sources-vector",
-  "sources-websocket",
-]
+sources-logs = ["sources-amqp", "sources-datadog_agent", "sources-demo_logs", "sources-docker_logs", "sources-exec", "sources-file", "sources-fluent", "sources-gcp_pubsub", "sources-heroku_logs", "sources-http_server", "sources-http_client", "sources-internal_logs", "sources-journald", "sources-kafka", "sources-kubernetes_logs", "sources-logstash", "sources-mqtt", "sources-nats", "sources-okta", "sources-opentelemetry", "sources-pulsar", "sources-file_descriptor", "sources-redis", "sources-socket", "sources-splunk_hec", "sources-stdin", "sources-syslog", "sources-vector", "sources-websocket", "sources-windows_event_log"]
+sources-metrics = ["dep:prost", "sources-apache_metrics", "sources-eventstoredb_metrics", "sources-host_metrics", "sources-internal_metrics", "sources-mongodb_metrics", "sources-nginx_metrics", "sources-postgresql_metrics", "sources-prometheus", "sources-static_metrics", "sources-statsd", "sources-vector", "sources-websocket"]
 
 sources-amqp = ["lapin", "async-rs"]
 sources-apache_metrics = ["sources-utils-http-client"]
-sources-aws_ecs_metrics = ["sources-utils-http-client"]
-sources-aws_kinesis_firehose = ["dep:base64", "sources-http_server", "sources-utils-http-encoding"]
-sources-aws_s3 = ["aws-core", "dep:aws-sdk-sqs", "dep:aws-sdk-s3", "dep:async-compression", "sources-aws_sqs", "tokio-util/io"]
-sources-aws_sqs = ["aws-core", "dep:aws-sdk-sqs"]
 sources-datadog_agent = ["sources-utils-http-encoding", "protobuf-build", "dep:prost"]
 sources-demo_logs = ["dep:fakedata"]
 sources-dnstap = ["sources-utils-net-tcp", "dep:base64", "dep:hickory-proto", "dep:dnsmsg-parser", "dep:dnstap-parser", "protobuf-build", "dep:prost", "vector-vrl-functions/dnstap"]
@@ -761,17 +650,7 @@ sources-mqtt = ["dep:rumqttc"]
 sources-nats = ["dep:async-nats", "dep:nkeys"]
 sources-nginx_metrics = ["dep:nom"]
 sources-okta = ["sources-utils-http-client"]
-sources-opentelemetry = [
-  "dep:hex",
-  "codecs-opentelemetry",
-  "vector-lib/opentelemetry",
-  "dep:prost",
-  "dep:prost-types",
-  "sources-http_server",
-  "sources-utils-http",
-  "sources-utils-http-headers",
-  "sources-vector",
-]
+sources-opentelemetry = ["dep:hex", "codecs-opentelemetry", "vector-lib/opentelemetry", "dep:prost", "dep:prost-types", "sources-http_server", "sources-utils-http", "sources-utils-http-headers", "sources-vector"]
 sources-postgresql_metrics = ["dep:postgres-openssl", "dep:tokio-postgres"]
 sources-prometheus = ["sources-prometheus-scrape", "sources-prometheus-remote-write", "sources-prometheus-pushgateway"]
 sources-prometheus-scrape = ["sinks-prometheus", "sources-utils-http-client", "vector-lib/prometheus"]
@@ -804,38 +683,10 @@ sources-vector = ["dep:prost", "dep:tonic", "dep:tonic-health", "protobuf-build"
 
 # Transforms
 transforms = ["transforms-logs", "transforms-metrics"]
-transforms-logs = [
-  "transforms-aws_ec2_metadata",
-  "transforms-dedupe",
-  "transforms-delay",
-  "transforms-filter",
-  "transforms-window",
-  "transforms-log_to_metric",
-  "transforms-lua",
-  "transforms-metric_to_log",
-  "transforms-reduce",
-  "transforms-remap",
-  "transforms-route",
-  "transforms-exclusive-route",
-  "transforms-sample",
-  "transforms-throttle",
-  "transforms-trace_to_log"
-]
-transforms-metrics = [
-  "transforms-aggregate",
-  "transforms-filter",
-  "transforms-incremental_to_absolute",
-  "transforms-log_to_metric",
-  "transforms-lua",
-  "transforms-metric_to_log",
-  "transforms-remap",
-  "transforms-tag_cardinality_limit",
-  "transforms-throttle",
-  "transforms-delay",
-]
+transforms-logs = ["transforms-dedupe", "transforms-delay", "transforms-filter", "transforms-window", "transforms-log_to_metric", "transforms-lua", "transforms-metric_to_log", "transforms-reduce", "transforms-remap", "transforms-route", "transforms-exclusive-route", "transforms-sample", "transforms-throttle", "transforms-trace_to_log"]
+transforms-metrics = ["transforms-aggregate", "transforms-filter", "transforms-incremental_to_absolute", "transforms-log_to_metric", "transforms-lua", "transforms-metric_to_log", "transforms-remap", "transforms-tag_cardinality_limit", "transforms-throttle", "transforms-delay"]
 
 transforms-aggregate = []
-transforms-aws_ec2_metadata = ["dep:arc-swap"]
 transforms-dedupe = ["transforms-impl-dedupe"]
 transforms-delay = []
 transforms-filter = []
@@ -860,84 +711,11 @@ transforms-impl-reduce = []
 
 # Sinks
 sinks = ["sinks-logs", "sinks-metrics"]
-sinks-logs = [
-  "sinks-amqp",
-  "sinks-appsignal",
-  "sinks-aws_cloudwatch_logs",
-  "sinks-aws_kinesis_firehose",
-  "sinks-aws_kinesis_streams",
-  "sinks-aws_s3",
-  "sinks-aws_sns",
-  "sinks-aws_sqs",
-  "sinks-axiom",
-  "sinks-azure_blob",
-  "sinks-azure_logs_ingestion",
-  "sinks-azure_monitor_logs",
-  "sinks-blackhole",
-  "sinks-chronicle",
-  "sinks-clickhouse",
-  "sinks-console",
-  "sinks-databend",
-  "sinks-databricks-zerobus",
-  "sinks-datadog_events",
-  "sinks-datadog_logs",
-  "sinks-datadog_traces",
-  "sinks-doris",
-  "sinks-elasticsearch",
-  "sinks-file",
-  "sinks-gcp",
-  "sinks-greptimedb_logs",
-  "sinks-honeycomb",
-  "sinks-http",
-  "sinks-humio",
-  "sinks-influxdb",
-  "sinks-kafka",
-  "sinks-keep",
-  "sinks-loki",
-  "sinks-mezmo",
-  "sinks-mqtt",
-  "sinks-nats",
-  "sinks-new_relic",
-  "sinks-new_relic_logs",
-  "sinks-opentelemetry",
-  "sinks-papertrail",
-  "sinks-postgres",
-  "sinks-pulsar",
-  "sinks-redis",
-  "sinks-sematext",
-  "sinks-socket",
-  "sinks-splunk_hec",
-  "sinks-vector",
-  "sinks-webhdfs",
-  "sinks-websocket",
-  "sinks-websocket-server",
-]
-sinks-metrics = [
-  "sinks-appsignal",
-  "sinks-aws_cloudwatch_metrics",
-  "sinks-blackhole",
-  "sinks-console",
-  "sinks-datadog_metrics",
-  "sinks-greptimedb_metrics",
-  "sinks-humio",
-  "sinks-influxdb",
-  "sinks-kafka",
-  "sinks-prometheus",
-  "sinks-sematext",
-  "sinks-statsd",
-  "sinks-vector",
-  "sinks-splunk_hec"
-]
+sinks-logs = ["sinks-amqp", "sinks-appsignal", "sinks-axiom", "sinks-azure_blob", "sinks-azure_logs_ingestion", "sinks-azure_monitor_logs", "sinks-blackhole", "sinks-chronicle", "sinks-clickhouse", "sinks-console", "sinks-databend", "sinks-databricks-zerobus", "sinks-datadog_events", "sinks-datadog_logs", "sinks-datadog_traces", "sinks-doris", "sinks-elasticsearch", "sinks-file", "sinks-gcp", "sinks-greptimedb_logs", "sinks-honeycomb", "sinks-http", "sinks-humio", "sinks-influxdb", "sinks-kafka", "sinks-keep", "sinks-loki", "sinks-mezmo", "sinks-mqtt", "sinks-nats", "sinks-new_relic", "sinks-new_relic_logs", "sinks-opentelemetry", "sinks-papertrail", "sinks-postgres", "sinks-pulsar", "sinks-redis", "sinks-sematext", "sinks-socket", "sinks-splunk_hec", "sinks-vector", "sinks-webhdfs", "sinks-websocket", "sinks-websocket-server"]
+sinks-metrics = ["sinks-appsignal", "sinks-blackhole", "sinks-console", "sinks-datadog_metrics", "sinks-greptimedb_metrics", "sinks-humio", "sinks-influxdb", "sinks-kafka", "sinks-prometheus", "sinks-sematext", "sinks-statsd", "sinks-vector", "sinks-splunk_hec"]
 
 sinks-amqp = ["deadpool", "lapin", "async-rs"]
 sinks-appsignal = []
-sinks-aws_cloudwatch_logs = ["aws-core", "dep:aws-sdk-cloudwatchlogs", "dep:aws-sdk-kms"]
-sinks-aws_cloudwatch_metrics = ["aws-core", "dep:aws-sdk-cloudwatch"]
-sinks-aws_kinesis_firehose = ["aws-core", "dep:aws-sdk-firehose"]
-sinks-aws_kinesis_streams = ["aws-core", "dep:aws-sdk-kinesis"]
-sinks-aws_s3 = ["dep:base64", "dep:md-5", "aws-core", "dep:aws-sdk-s3"]
-sinks-aws_sqs = ["aws-core", "dep:aws-sdk-sqs"]
-sinks-aws_sns = ["aws-core", "dep:aws-sdk-sns"]
 sinks-axiom = ["sinks-http"]
 sinks-azure_blob = ["dep:azure_core", "dep:azure_identity", "dep:azure_storage_blob"]
 sinks-azure_logs_ingestion = ["dep:azure_core", "dep:azure_identity", "dep:azure_storage_blob"]
@@ -991,79 +769,14 @@ sinks-webhdfs = ["dep:opendal"]
 nightly = []
 
 # Integration testing-related features
-all-integration-tests = [
-  "amqp-integration-tests",
-  "appsignal-integration-tests",
-  "aws-integration-tests",
-  "axiom-integration-tests",
-  "azure-integration-tests",
-  "clickhouse-integration-tests",
-  "databend-integration-tests",
-  "datadog-agent-integration-tests",
-  "datadog-logs-integration-tests",
-  "datadog-metrics-integration-tests",
-  "datadog-traces-integration-tests",
-  "dnstap-integration-tests",
-  "docker-logs-integration-tests",
-  "doris-integration-tests",
-  "es-integration-tests",
-  "eventstoredb_metrics-integration-tests",
-  "fluent-integration-tests",
-  "gcp-cloud-storage-integration-tests",
-  "gcp-integration-tests",
-  "gcp-pubsub-integration-tests",
-  "greptimedb-integration-tests",
-  "http-client-integration-tests",
-  "humio-integration-tests",
-  "influxdb-integration-tests",
-  "kafka-integration-tests",
-  "logstash-integration-tests",
-  "loki-integration-tests",
-  "mongodb_metrics-integration-tests",
-  "mqtt-integration-tests",
-  "nats-integration-tests",
-  "nginx-integration-tests",
-  "opentelemetry-integration-tests",
-  "postgresql_metrics-integration-tests",
-  "postgres_sink-integration-tests",
-  "prometheus-integration-tests",
-  "pulsar-integration-tests",
-  "redis-integration-tests",
-  "splunk-integration-tests",
-  "vector-api-tests",
-  "webhdfs-integration-tests",
-  "windows-event-log-integration-tests",
-]
+all-integration-tests = ["amqp-integration-tests", "appsignal-integration-tests", "axiom-integration-tests", "azure-integration-tests", "clickhouse-integration-tests", "databend-integration-tests", "datadog-agent-integration-tests", "datadog-logs-integration-tests", "datadog-metrics-integration-tests", "datadog-traces-integration-tests", "dnstap-integration-tests", "docker-logs-integration-tests", "doris-integration-tests", "es-integration-tests", "eventstoredb_metrics-integration-tests", "fluent-integration-tests", "gcp-cloud-storage-integration-tests", "gcp-integration-tests", "gcp-pubsub-integration-tests", "greptimedb-integration-tests", "http-client-integration-tests", "humio-integration-tests", "influxdb-integration-tests", "kafka-integration-tests", "logstash-integration-tests", "loki-integration-tests", "mongodb_metrics-integration-tests", "mqtt-integration-tests", "nats-integration-tests", "nginx-integration-tests", "opentelemetry-integration-tests", "postgresql_metrics-integration-tests", "postgres_sink-integration-tests", "prometheus-integration-tests", "pulsar-integration-tests", "redis-integration-tests", "splunk-integration-tests", "vector-api-tests", "webhdfs-integration-tests", "windows-event-log-integration-tests"]
 
 amqp-integration-tests = ["sources-amqp", "sinks-amqp"]
 appsignal-integration-tests = ["sinks-appsignal"]
 
-aws-integration-tests = [
-  "aws-cloudwatch-logs-integration-tests",
-  "aws-cloudwatch-metrics-integration-tests",
-  "aws-ec2-metadata-integration-tests",
-  "aws-ecs-metrics-integration-tests",
-  "aws-kinesis-firehose-integration-tests",
-  "aws-kinesis-streams-integration-tests",
-  "aws-s3-integration-tests",
-  "aws-sqs-integration-tests",
-  "aws-sns-integration-tests",
-]
 
-azure-integration-tests = [
-  "azure-blob-integration-tests",
-  "azure-logs-ingestion-integration-tests",
-]
+azure-integration-tests = ["azure-blob-integration-tests", "azure-logs-ingestion-integration-tests"]
 
-aws-cloudwatch-logs-integration-tests = ["sinks-aws_cloudwatch_logs"]
-aws-cloudwatch-metrics-integration-tests = ["sinks-aws_cloudwatch_metrics"]
-aws-ec2-metadata-integration-tests = ["transforms-aws_ec2_metadata"]
-aws-ecs-metrics-integration-tests = ["sources-aws_ecs_metrics"]
-aws-kinesis-firehose-integration-tests = ["sinks-aws_kinesis_firehose", "dep:aws-sdk-elasticsearch", "sinks-elasticsearch"]
-aws-kinesis-streams-integration-tests = ["sinks-aws_kinesis_streams"]
-aws-s3-integration-tests = ["sinks-aws_s3", "sources-aws_s3"]
-aws-sqs-integration-tests = ["sinks-aws_sqs"]
-aws-sns-integration-tests = ["sinks-aws_sns"]
 axiom-integration-tests = ["sinks-axiom"]
 azure-blob-integration-tests = ["sinks-azure_blob"]
 azure-logs-ingestion-integration-tests = ["sinks-azure_logs_ingestion"]
@@ -1075,7 +788,7 @@ datadog-metrics-integration-tests = ["sinks-datadog_metrics", "dep:prost"]
 datadog-traces-integration-tests = ["sources-datadog_agent", "sinks-datadog_traces", "axum/tokio"]
 docker-logs-integration-tests = ["sources-docker_logs"]
 doris-integration-tests = ["sinks-doris"]
-es-integration-tests = ["sinks-elasticsearch", "aws-core"]
+es-integration-tests = ["sinks-elasticsearch"]
 eventstoredb_metrics-integration-tests = ["sources-eventstoredb_metrics"]
 fluent-integration-tests = ["docker", "sources-fluent"]
 gcp-cloud-storage-integration-tests = ["sinks-gcp"]
@@ -1104,79 +817,27 @@ webhdfs-integration-tests = ["sinks-webhdfs"]
 windows-event-log-integration-tests = ["sources-windows_event_log-integration-tests"]
 disable-resolv-conf = []
 shutdown-tests = ["api", "sinks-blackhole", "sinks-console", "sinks-prometheus", "sources", "transforms-lua", "transforms-remap"]
-cli-tests = ["sinks-blackhole", "sinks-socket", "sources-demo_logs", "sources-file", "transforms-remap", "transforms-filter", "transforms-aws_ec2_metadata"]
+cli-tests = ["sinks-blackhole", "sinks-socket", "sources-demo_logs", "sources-file", "transforms-remap", "transforms-filter"]
 test-utils = ["vector-lib/test"]
 
 # End-to-End testing-related features
-all-e2e-tests = [
-  "e2e-tests-datadog",
-  "e2e-tests-opentelemetry"
-]
+all-e2e-tests = ["e2e-tests-datadog", "e2e-tests-opentelemetry"]
 
-e2e-tests-datadog = [
-  "sources-datadog_agent",
-  "sinks-datadog_logs",
-  "sinks-datadog_metrics",
-  "dep:async-compression"
-]
+e2e-tests-datadog = ["sources-datadog_agent", "sinks-datadog_logs", "sinks-datadog_metrics", "dep:async-compression"]
 
-e2e-tests-opentelemetry = [
-  "sources-opentelemetry",
-  "sinks-opentelemetry",
-  "sources-internal_metrics",
-  "transforms-remap",
-  "sinks-console",
-  "sinks-file",
-  "codecs-opentelemetry",
-  "dep:prost-reflect"
-]
+e2e-tests-opentelemetry = ["sources-opentelemetry", "sinks-opentelemetry", "sources-internal_metrics", "transforms-remap", "sinks-console", "sinks-file", "codecs-opentelemetry", "dep:prost-reflect"]
 
-vector-api-tests = [
-  "top",
-  "api",
-  "api-client-minimal",
-  "sources-demo_logs",
-  "sources-gcp_pubsub",
-  "transforms-log_to_metric",
-  "transforms-remap",
-  "transforms-route",
-  "sinks-blackhole"
-]
-vector-unit-test-tests = [
-  "sources-demo_logs",
-  "transforms-remap",
-  "transforms-route",
-  "transforms-filter",
-  "transforms-reduce",
-  "sinks-console"
-]
+vector-api-tests = ["top", "api", "api-client-minimal", "sources-demo_logs", "sources-gcp_pubsub", "transforms-log_to_metric", "transforms-remap", "transforms-route", "sinks-blackhole"]
+vector-unit-test-tests = ["sources-demo_logs", "transforms-remap", "transforms-route", "transforms-filter", "transforms-reduce", "sinks-console"]
 
 component-validation-runner = ["dep:tonic", "sources-internal_logs", "sources-internal_metrics", "sources-vector", "sinks-vector"]
 # For now, only include components that implement ValidatableComponent.
 # In the future, this can change to simply reference the targets `sources`, `transforms`, `sinks`
-component-validation-tests = [
-  "component-validation-runner",
-  "sources-http_client",
-  "sources-http_server",
-  "sinks-http",
-  "sinks-splunk_hec",
-  "sources-splunk_hec",
-  "sinks-datadog_logs",
-  "sources-datadog_agent",
-]
+component-validation-tests = ["component-validation-runner", "sources-http_client", "sources-http_server", "sinks-http", "sinks-splunk_hec", "sources-splunk_hec", "sinks-datadog_logs", "sources-datadog_agent"]
 
 # Grouping together features for benchmarks. We exclude the API client due to it causing the build process to run out
 # of memory when those additional dependencies are built in CI.
-benches = [
-  "sinks-file",
-  "sinks-http",
-  "sinks-socket",
-  "sources-file",
-  "sources-socket",
-  "sources-syslog",
-  "transforms-lua",
-  "transforms-sample",
-]
+benches = ["sinks-file", "sinks-http", "sinks-socket", "sources-file", "sources-socket", "sources-syslog", "transforms-lua", "transforms-sample"]
 dnstap-benches = ["sources-dnstap"]
 language-benches = ["sinks-socket", "sources-socket", "transforms-lua", "transforms-remap"]
 # Separate benching process for metrics due to the nature of the bootstrap procedures.
