@@ -21,7 +21,7 @@ use tokio::{
     sync::{OwnedSemaphorePermit, Semaphore},
 };
 use tokio_openssl::SslStream;
-use tonic::transport::{Certificate, server::Connected};
+use tonic::transport::server::Connected;
 
 use super::{
     CreateAcceptorSnafu, HandshakeSnafu, IncomingListenerSnafu, MaybeTlsSettings, MaybeTlsStream,
@@ -445,10 +445,30 @@ impl From<X509> for CertificateMetadata {
     }
 }
 
+/// Plain PEM-bytes carrier replacing `tonic::transport::Certificate` (dropped along with
+/// tonic's `tls`/`tls-roots` features to eliminate a rustls-webpki 0.102 CVE chain --
+/// `tls` alone still pulls `tokio-rustls` -> `rustls` -> `rustls-webpki`, so there is no
+/// tonic feature that keeps `Certificate` without reintroducing it). Vector's own TLS
+/// acceptor here is 100% openssl (`SslAcceptor`/`tokio_openssl::SslStream`); this type only
+/// exists to satisfy `Connected::ConnectInfo`'s shape and carries the peer cert as opaque
+/// PEM bytes, exactly as `tonic::transport::Certificate` did.
+#[derive(Clone, Debug)]
+pub struct PeerCertificate(Vec<u8>);
+
+impl PeerCertificate {
+    pub fn from_pem(pem: impl AsRef<[u8]>) -> Self {
+        Self(pem.as_ref().to_vec())
+    }
+
+    pub fn pem(&self) -> &[u8] {
+        &self.0
+    }
+}
+
 #[derive(Clone)]
 pub struct MaybeTlsConnectInfo {
     pub remote_addr: SocketAddr,
-    pub peer_certs: Option<Vec<Certificate>>,
+    pub peer_certs: Option<Vec<PeerCertificate>>,
 }
 
 impl Connected for MaybeTlsIncomingStream<TcpStream> {
@@ -463,7 +483,7 @@ impl Connected for MaybeTlsIncomingStream<TcpStream> {
                 .map(|s| {
                     s.into_iter()
                         .filter_map(|c| c.to_pem().ok())
-                        .map(Certificate::from_pem)
+                        .map(PeerCertificate::from_pem)
                         .collect()
                 }),
         }
