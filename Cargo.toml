@@ -626,7 +626,7 @@ secrets-aws-secrets-manager = []
 
 # Sources
 sources = ["sources-logs", "sources-metrics"]
-sources-logs = ["sources-amqp", "sources-datadog_agent", "sources-demo_logs", "sources-docker_logs", "sources-exec", "sources-file", "sources-fluent", "sources-heroku_logs", "sources-http_server", "sources-http_client", "sources-internal_logs", "sources-journald", "sources-kafka", "sources-kubernetes_logs", "sources-logstash", "sources-nats", "sources-okta", "sources-opentelemetry", "sources-pulsar", "sources-file_descriptor", "sources-redis", "sources-socket", "sources-splunk_hec", "sources-stdin", "sources-syslog", "sources-vector", "sources-websocket", "sources-windows_event_log"]
+sources-logs = ["sources-amqp", "sources-datadog_agent", "sources-demo_logs", "sources-docker_logs", "sources-exec", "sources-file", "sources-fluent", "sources-heroku_logs", "sources-http_server", "sources-http_client", "sources-internal_logs", "sources-journald", "sources-kubernetes_logs", "sources-logstash", "sources-nats", "sources-okta", "sources-opentelemetry", "sources-pulsar", "sources-file_descriptor", "sources-redis", "sources-socket", "sources-splunk_hec", "sources-stdin", "sources-syslog", "sources-vector", "sources-websocket", "sources-windows_event_log"]
 sources-metrics = ["dep:prost", "sources-apache_metrics", "sources-eventstoredb_metrics", "sources-host_metrics", "sources-internal_metrics", "sources-mongodb_metrics", "sources-nginx_metrics", "sources-postgresql_metrics", "sources-prometheus", "sources-static_metrics", "sources-statsd", "sources-vector", "sources-websocket"]
 
 sources-amqp = ["lapin", "async-rs"]
@@ -653,6 +653,19 @@ sources-internal_logs = []
 sources-internal_metrics = []
 sources-static_metrics = []
 sources-journald = []
+# cve-strip lineage: `sources-kafka` / `sinks-kafka` (below) are deliberately NO
+# LONGER referenced by the default-reachable meta-features (sources-logs /
+# sinks-logs / sinks-metrics). The feature definitions stay valid (so
+# `kafka-integration-tests` still resolves), but nothing the nixpkgs build
+# reaches through `default -> enable-api-client -> base -> {sinks,sources}`
+# activates `dep:rdkafka` anymore, so librdkafka is never compiled or linked.
+# Reason: librdkafka.so.1 (built against a newer glibc that ships the
+# GLIBC_ABI_GNU2_TLS version node) required a symbol the hardened image's glibc
+# does not provide, crashing vector at dynamic-link time before main(). No
+# akeyless/Camelot Vector deployment uses a kafka sink or source (verified
+# against every akeyless-environments vector-values.yaml: splunk_hec / gcp /
+# azure_blob / aws_s3 / kubernetes_logs only), so dropping it is at-cause,
+# surface-reducing, and consistent with the aws/mqtt/parquet drops above.
 sources-kafka = ["dep:rdkafka"]
 sources-kubernetes_logs = ["vector-lib/file-source", "kubernetes", "transforms-reduce"]
 sources-logstash = ["sources-utils-net-tcp", "tokio-util/net"]
@@ -721,8 +734,8 @@ transforms-impl-reduce = []
 
 # Sinks
 sinks = ["sinks-logs", "sinks-metrics"]
-sinks-logs = ["sinks-amqp", "sinks-appsignal", "sinks-axiom", "sinks-azure_blob", "sinks-azure_logs_ingestion", "sinks-azure_monitor_logs", "sinks-blackhole", "sinks-chronicle", "sinks-clickhouse", "sinks-console", "sinks-databend", "sinks-datadog_events", "sinks-datadog_logs", "sinks-datadog_traces", "sinks-doris", "sinks-elasticsearch", "sinks-file", "sinks-gcp", "sinks-greptimedb_logs", "sinks-honeycomb", "sinks-http", "sinks-humio", "sinks-influxdb", "sinks-kafka", "sinks-keep", "sinks-loki", "sinks-mezmo", "sinks-nats", "sinks-new_relic", "sinks-new_relic_logs", "sinks-opentelemetry", "sinks-papertrail", "sinks-postgres", "sinks-pulsar", "sinks-redis", "sinks-sematext", "sinks-socket", "sinks-splunk_hec", "sinks-vector", "sinks-webhdfs", "sinks-websocket", "sinks-websocket-server"]
-sinks-metrics = ["sinks-appsignal", "sinks-blackhole", "sinks-console", "sinks-datadog_metrics", "sinks-greptimedb_metrics", "sinks-humio", "sinks-influxdb", "sinks-kafka", "sinks-prometheus", "sinks-sematext", "sinks-statsd", "sinks-vector", "sinks-splunk_hec"]
+sinks-logs = ["sinks-amqp", "sinks-appsignal", "sinks-axiom", "sinks-azure_blob", "sinks-azure_logs_ingestion", "sinks-azure_monitor_logs", "sinks-blackhole", "sinks-chronicle", "sinks-clickhouse", "sinks-console", "sinks-databend", "sinks-datadog_events", "sinks-datadog_logs", "sinks-datadog_traces", "sinks-doris", "sinks-elasticsearch", "sinks-file", "sinks-gcp", "sinks-greptimedb_logs", "sinks-honeycomb", "sinks-http", "sinks-humio", "sinks-influxdb", "sinks-keep", "sinks-loki", "sinks-mezmo", "sinks-nats", "sinks-new_relic", "sinks-new_relic_logs", "sinks-opentelemetry", "sinks-papertrail", "sinks-postgres", "sinks-pulsar", "sinks-redis", "sinks-sematext", "sinks-socket", "sinks-splunk_hec", "sinks-vector", "sinks-webhdfs", "sinks-websocket", "sinks-websocket-server"]
+sinks-metrics = ["sinks-appsignal", "sinks-blackhole", "sinks-console", "sinks-datadog_metrics", "sinks-greptimedb_metrics", "sinks-humio", "sinks-influxdb", "sinks-prometheus", "sinks-sematext", "sinks-statsd", "sinks-vector", "sinks-splunk_hec"]
 
 sinks-amqp = ["deadpool", "lapin", "async-rs"]
 sinks-appsignal = []
