@@ -467,7 +467,43 @@ rdkafka = { workspace = true, features = ["cmake_build"], optional = true }
 [target.'cfg(unix)'.dependencies]
 libc.workspace = true
 nix = { version = "0.31", default-features = false, features = ["socket", "signal", "fs", "resource"] }
-tikv-jemallocator = { version = "0.7.0", default-features = false, features = ["unprefixed_malloc_on_supported_platforms"], optional = true }
+# NOTE (pleme-io cve-strip fork): upstream sets
+# `features = ["unprefixed_malloc_on_supported_platforms"]` here. It is dropped
+# so the crate uses jemalloc's `_rjem_`-PREFIXED symbols.
+#
+# INVARIANT: the prefix decision made by `tikv-jemalloc-sys`'s build script and
+# the prefix the linked libjemalloc archive was BUILT with must agree. When they
+# disagree the build dies at the final link, not at compile time.
+#
+# Under nix the archive is supplied via `JEMALLOC_OVERRIDE` (nixpkgs'
+# `rust-jemalloc-sys*` setup hook), so build.rs takes its early-return branch and
+# never builds jemalloc itself -- it only links what nix already built. nixpkgs'
+# `rust-jemalloc-sys-unprefixed` refuses to go unprefixed on musl
+# (`unprefixed' = unprefixed && !stdenv.hostPlatform.isMusl && ...`), so on musl
+# it emits `--with-jemalloc-prefix=_rjem_` regardless of its name, exporting
+# `_rjem_mallocx` / `_rjem_sdallocx`. Meanwhile this feature makes the crate
+# declare the BARE `mallocx` / `sdallocx`, because tikv dropped musl from
+# `NO_UNPREFIXED_MALLOC_TARGETS` (now `["android", "dragonfly", "apple"]`; the
+# older revision nixpkgs' comment still cites carried `"musl"`). That mismatch
+# is what broke the static-musl build:
+#   undefined reference to `mallocx' / `sdallocx'
+# Dropping the feature sets `use_prefix = true` -> `cargo:rustc-cfg=prefixed` ->
+# `#[cfg_attr(prefixed, link_name = "_rjem_mallocx")]` -> matches the archive.
+#
+# Prefixed is also the hazard-free arrangement: jemalloc serves only Rust's
+# `#[global_allocator]` and never interposes libc's `malloc`/`free`, so the
+# split-allocator segfault class that `NO_UNPREFIXED_MALLOC_TARGETS` exists to
+# prevent (libc allocates, jemalloc frees) cannot arise.
+#
+# CAVEAT for a glibc build of this fork: nixpkgs' `rust-jemalloc-sys-unprefixed`
+# IS genuinely unprefixed there, so pair a glibc build with the PREFIXED
+# `rust-jemalloc-sys` instead, or the same mismatch appears mirrored
+# (undefined `_rjem_mallocx`). hardened-images builds only the musl static path.
+#
+# Cargo.lock is untouched: `tikv-jemalloc-sys` is an unconditional dependency of
+# `tikv-jemallocator`, so dropping a feature changes no resolved version and the
+# vendor hash does not move.
+tikv-jemallocator = { version = "0.7.0", default-features = false, optional = true }
 dnsmsg-parser = { path = "lib/dnsmsg-parser", optional = true }
 dnstap-parser = { path = "lib/vector-vrl/dnstap-parser", optional = true }
 hickory-proto = { workspace = true, optional = true }
