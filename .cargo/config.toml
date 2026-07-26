@@ -16,19 +16,27 @@ rustflags = [
   "-Dclippy::dbg_macro",
 ]
 
-# We need to bring in `libstdc++` for things that build against C++ (librdkafka, etc) which comes along in the
-# `cross` base image but _isn't_ in a path searched by the linker normally. Additionally, our custom Docker image that
-# we base on the `cross` image moves `libstdc++` into this custom-looking directory to avoid some _other_ libraries
-# included in the `cross` base image from having a higher precedence than some of the "self-contained" libraries that
-# Rust will bundle/use for specific targets like MUSL.
-[target.x86_64-unknown-linux-musl]
-rustflags = "-Lnative=/lib/native-libs"
-
-[target.aarch64-unknown-linux-musl]
-rustflags = "-Lnative=/lib/native-libs"
-
-[target.armv7-unknown-linux-musleabihf]
-rustflags = "-Lnative=/lib/native-libs"
+# NOTE (pleme-io cve-strip fork): upstream carried three musl targets here --
+# x86_64-unknown-linux-musl, aarch64-unknown-linux-musl and
+# armv7-unknown-linux-musleabihf -- each setting a STRING-form
+# `rustflags = "-Lnative=/lib/native-libs"` to pick up the `libstdc++` that
+# `scripts/cross/Dockerfile` copies into that directory for C++ deps (librdkafka
+# et al) inside the `cross` base image.
+#
+# They are removed for two independent reasons:
+#   1. `/lib/native-libs` is a `cross`-Docker artifact. It does not exist under
+#      nix; the nix toolchain owns musl rustflags and supplies the sysroot and
+#      any native lib paths itself.
+#   2. String form is unmergeable. nixpkgs' pkgsStatic injects an ARRAY-form
+#      `rustflags` for these same target keys, and cargo refuses to merge a
+#      string with an array -- `failed to merge key 'rustflags': expected
+#      string, but found array` -- which killed the static-musl build at
+#      cargoBuildHook config load, before compiling anything. The glibc targets
+#      below were never affected because they already use the array form.
+#
+# The C++ dependency that motivated the flag is also gone at cause: this fork
+# drops kafka (sinks+sources), so `dep:rdkafka`/librdkafka is never compiled.
+# Do not re-add these as arrays -- the flags themselves are wrong for nix.
 
 [target.x86_64-unknown-linux-gnu]
 rustflags = ["-C", "link-args=-rdynamic"]
