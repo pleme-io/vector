@@ -242,7 +242,27 @@ vector-common-macros = { path = "lib/vector-common-macros" }
 vector-lib = { path = "lib/vector-lib", default-features = false, features = ["vrl"] }
 vector-vrl-category = { path = "lib/vector-vrl/category" }
 vector-vrl-functions = { path = "lib/vector-vrl/functions", default-features = false }
-vrl = { git = "https://github.com/vectordotdev/vrl.git", branch = "main", default-features = false, features = ["arbitrary", "cli", "test", "test_framework", "stdlib-base"] }
+# ★ MOVED OFF GIT TO crates.io (2026-08-17, operator decision).
+#
+# Was: `git = "https://github.com/vectordotdev/vrl.git", branch = "main"`.
+# A floating default branch decides which language every `remap` transform in
+# the fleet is compiled against, with no commit here recording a change --
+# ★★ HERMETIC SUPPLY CHAIN's exact failure shape.
+#
+# ★ THIS IS NOT A RELABELING, and the version number is what hides that.
+# Cargo.lock read `version = "0.34.0"` for the git dep too, because vrl's own
+# Cargo.toml keeps the last released version between releases. Measured against
+# the GitHub compare API, the pinned rev 6adf9405 and the `v0.34.0` tag are
+# **diverged: ahead 4, behind 2, 32 files changed**. Same number, different code.
+# The four commits given up are #1857/#1858 (release mechanics), #1862 (a
+# `type_def` correctness fix -- i.e. the TYPE CHECKER, which is precisely what
+# decides whether a VRL program compiles) and #1822 (nginx/apache parse perf).
+#
+# Accepted deliberately: a released, immutable, checksummed crates.io artifact
+# is worth more than four unreleased commits, and the fleet now speaks a VRL
+# version it can name. If #1862 turns out to be load-bearing, the answer is to
+# wait for vrl 0.35.0, never to go back to a branch.
+vrl = { version = "0.34.0", default-features = false, features = ["arbitrary", "cli", "test", "test_framework", "stdlib-base"] }
 zstd = { version = "0.13.0", default-features = false }
 mock_instant = { version = "0.6" }
 serial_test = { version = "3.4" }
