@@ -38,17 +38,58 @@ license-files = [
     { path = "LICENSE", hash = 0xbd0eed23 }
 ]
 
+# ── Advisory suppressions ────────────────────────────────────────────────────
+#
+# ★ EVERY ENTRY BELOW WAS MEASURED, NOT INHERITED (2026-08-17).
+#
+# Method: run `cargo-deny check advisories` with `ignore = []` against this
+# branch's Cargo.lock and keep only the IDs that actually fire. An ignore whose
+# crate has since been removed is not harmless -- it teaches the next reader
+# that a cured CVE is still live, and it hides the fact that the strip worked.
+#
+# DELETED as proven dead weight (5 entries; none fires with an empty ignore
+# list, because the CVE strip genuinely removed the vulnerable code):
+#   RUSTSEC-2026-0049 / -0098 / -0099 / -0104  rustls-webpki 0.101/0.102
+#       Cargo.lock now carries ONLY rustls-webpki 0.103.13. The webpki strip
+#       reached its goal; these four were the receipt of a fight already won.
+#   RUSTSEC-2024-0436                          paste, via parquet
+#       Both `paste` and `parquet` are ABSENT from Cargo.lock -- removed by the
+#       parquet-codec strip. This one was never classified before.
+#
+# ★ CORRECTED, DO NOT "CLEAN UP": the two quick-xml entries below were on the
+# chopping block because their own `reason` text named version 0.39.2, which is
+# absent from this lock. Measurement says otherwise -- RUSTSEC-2026-0194/-0195
+# fire against quick-xml **0.31.0 and 0.38.4**, both of which ARE present. The
+# advisory range is wider than the reason string implied. Deleting them on the
+# strength of the prose would have turned the build red; the reasons are now
+# rewritten to say what actually fires.
+#
+# ★ KNOWINGLY RED, AND DELIBERATELY NOT SUPPRESSED (4 advisories):
+# `cargo-deny check advisories` FAILS on this tree today, on IDs that appear
+# nowhere below because they are newer than this file's last edit:
+#   RUSTSEC-2026-0221  event-listener 5.4.1   unsound  (!Send across threads)
+#   RUSTSEC-2026-0235  rkyv 0.7.46            vuln     (OOB read on Rc/Arc)
+#   RUSTSEC-2026-0253  lru 0.16.4 + 0.18.1    unsound  (UAF in pop())
+#   RUSTSEC-2026-0257  webbrowser 1.2.1
+# The scheduled `Deny - Linux` workflow has failed every night at least
+# 2026-08-11..08-15. Adding four more ignores is what would make that green,
+# and under the fleet's real-0-CVE / no-suppression bar that is the wrong fix:
+# the gate is red because the tree IS affected. It stays red until the
+# dependencies move. This comment records the state; it does not excuse it.
 [advisories]
 ignore = [
-  { id = "RUSTSEC-2023-0071", reason = "rsa marvin attack - unpatched upstream (https://github.com/vectordotdev/vector/issues/19262)" },
-  { id = "RUSTSEC-2024-0388", reason = "derivative is unmaintained (https://github.com/vectordotdev/vector/issues/24940)" },
-  { id = "RUSTSEC-2025-0134", reason = "rustls-pemfile is unmaintained - unpatched crate (https://github.com/bytebeamio/rumqtt/issues/1010) & tonic/reqwest upgrade (https://github.com/vectordotdev/vector/issues/19179)" },
-  { id = "RUSTSEC-2026-0049", reason = "rustls-webpki 0.102 is vulnerable - tonic upgrade (https://github.com/vectordotdev/vector/issues/19179)" },
-  { id = "RUSTSEC-2026-0098", reason = "rustls-webpki 0.102/0.101 is vulnerable - tonic upgrade (https://github.com/vectordotdev/vector/issues/19179)" },
-  { id = "RUSTSEC-2026-0099", reason = "rustls-webpki 0.102/0.101 is vulnerable - tonic upgrade (https://github.com/vectordotdev/vector/issues/19179)" },
-  { id = "RUSTSEC-2024-0436", reason = "paste crate is unmaintained - transitive dependency via parquet v56.2.0, no safe upgrade available" },
-  { id = "RUSTSEC-2026-0104", reason = "rustls-webpki 0.102/0.101 CRL parsing panic - tonic upgrade (https://github.com/vectordotdev/vector/issues/19179); 0.103 already patched to 0.103.13" },
-  { id = "RUSTSEC-2026-0173", reason = "proc-macro-error2 is unmaintained - transitive dep via mlua_derive v0.11.0; unblocked when mlua upgrades its derive macro" },
-  { id = "RUSTSEC-2026-0194", reason = "quick-xml 0.39.2 quadratic-time duplicate attribute check - transitive dep via azure_core/typespec, no newer typespec release available" },
-  { id = "RUSTSEC-2026-0195", reason = "quick-xml 0.39.2 unbounded namespace-declaration allocation in NsReader - transitive dep via azure_core/typespec, no newer typespec release available" },
+  # LIVE and a genuine vulnerability -- the only real CVE in this list.
+  # Marvin timing attack; no patched `rsa` release exists. POA&M, not a pass.
+  { id = "RUSTSEC-2023-0071", reason = "rsa 0.9.10 Marvin timing attack -- unpatched upstream, no fixed release exists (https://github.com/vectordotdev/vector/issues/19262). MEASURED live 2026-08-17." },
+
+  # LIVE, but unmaintained-crate warnings rather than exploitable CVEs.
+  { id = "RUSTSEC-2024-0388", reason = "derivative 2.2.0 is unmaintained -- not a vulnerability (https://github.com/vectordotdev/vector/issues/24940). MEASURED live 2026-08-17." },
+  { id = "RUSTSEC-2025-0134", reason = "rustls-pemfile 1.0.4 is unmaintained -- not a vulnerability; cleared by the tonic/reqwest upgrade (https://github.com/vectordotdev/vector/issues/19179). MEASURED live 2026-08-17." },
+  { id = "RUSTSEC-2026-0173", reason = "proc-macro-error2 2.0.1 is unmaintained -- not a vulnerability; transitive via mlua_derive 0.11.0, cleared when mlua upgrades its derive macro OR when transforms-lua leaves the default feature closure. MEASURED live 2026-08-17." },
+
+  # LIVE vulnerabilities. Reasons corrected 2026-08-17: these fire against
+  # quick-xml 0.31.0 and 0.38.4 (both in this lock), NOT 0.39.2 as previously
+  # written. Both are DoS-class parser issues reached only through XML input.
+  { id = "RUSTSEC-2026-0194", reason = "quick-xml 0.31.0 + 0.38.4 quadratic-time duplicate-attribute check -- transitive via azure_core/typespec, no newer typespec release. MEASURED live 2026-08-17 against BOTH versions; the previous reason named 0.39.2, which is absent." },
+  { id = "RUSTSEC-2026-0195", reason = "quick-xml 0.31.0 + 0.38.4 unbounded namespace-declaration allocation in NsReader -- transitive via azure_core/typespec, no newer typespec release. MEASURED live 2026-08-17 against BOTH versions; the previous reason named 0.39.2, which is absent." },
 ]
