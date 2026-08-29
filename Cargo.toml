@@ -319,12 +319,12 @@ metrics-tracing-context.workspace = true
 
 # AWS - Official SDK
 #
-# cve-strip PARTIAL RESTORE: aws_s3 ONLY. Restored because aws_s3 is live in 6
-# akeyless-environments vector configs, 4 of them PRODUCTION, all with
+# cve-strip PARTIAL RESTORE: aws_s3 ONLY. Restored because aws_s3 is live in
+# several deployed vector configs, some of them PRODUCTION, all with
 # auth.assume_role. The other five stripped components (mqtt, kafka,
 # gcp_pubsub, parquet, databricks) stay stripped -- that is what keeps rumqttc
 # and tonic's tls feature out of the graph, and they are unused by every one of
-# the 27 live configs.
+# the live configs we deploy.
 #
 # EVERY `default-features = false` below is LOAD-BEARING for the 0-CVE result,
 # not cosmetic. Generated aws-sdk-* crates carry
@@ -782,8 +782,8 @@ sources-journald = []
 # Reason: librdkafka.so.1 (built against a newer glibc that ships the
 # GLIBC_ABI_GNU2_TLS version node) required a symbol the hardened image's glibc
 # does not provide, crashing vector at dynamic-link time before main(). No
-# akeyless/Camelot Vector deployment uses a kafka sink or source (verified
-# against every akeyless-environments vector-values.yaml: splunk_hec / gcp /
+# deployed Vector config in our fleet uses a kafka sink or source (verified
+# against every deployed vector-values.yaml: splunk_hec / gcp /
 # azure_blob / aws_s3 / kubernetes_logs only), so dropping it is at-cause,
 # surface-reducing, and consistent with the aws/mqtt/parquet drops above.
 sources-kafka = ["dep:rdkafka"]
