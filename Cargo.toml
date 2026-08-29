@@ -698,8 +698,8 @@ sources-journald = []
 # Reason: librdkafka.so.1 (built against a newer glibc that ships the
 # GLIBC_ABI_GNU2_TLS version node) required a symbol the hardened image's glibc
 # does not provide, crashing vector at dynamic-link time before main(). No
-# akeyless/Camelot Vector deployment uses a kafka sink or source (verified
-# against every akeyless-environments vector-values.yaml: splunk_hec / gcp /
+# deployed Vector config in our fleet uses a kafka sink or source (verified
+# against every deployed vector-values.yaml: splunk_hec / gcp /
 # azure_blob / aws_s3 / kubernetes_logs only), so dropping it is at-cause,
 # surface-reducing, and consistent with the aws/mqtt/parquet drops above.
 sources-kafka = ["dep:rdkafka"]
